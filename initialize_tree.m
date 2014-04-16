@@ -73,9 +73,12 @@
             C( node_feature_label( j ) , svm_test_label( j ) ) = ...
                 C( node_feature_label( j ) , svm_test_label( j ) ) + 1 ;
         end
+        C = ( C + C' ) / 2 ;
+        
+        return ;
         
         % And using spectral clustering
-        label_split = spectral_clustering( C + 1e-10 , 2 ) ;
+        label_split = spectral_clustering( C + 1e-6 , 2 ) ;
         
         % Split label to two child node
         for j = 1 : 2 

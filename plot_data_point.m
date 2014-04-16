@@ -16,6 +16,7 @@ function plot_data_point( feature , label )
     axis([0 1 0 1]);
     
     legend_handle = legend( legend_cell ) ;
-    set(legend_handle,'Location','NorthWest')
-    set(legend_handle,'Interpreter','none')
+    set(legend_handle,'Location','NorthWest');
+    set(legend_handle,'Interpreter','none');
+    set(gca,'color','none');
 end
