@@ -1,4 +1,4 @@
-% function [ tree ] = initialize_tree( feature , label )
+function [ tree ] = initialize_tree( feature , label )
 % 根据传入的图像特征以及图像标签，生成一颗已经确定结构的 Label Tree
 % 默认 Label Tree 是一个二叉树
 %
@@ -9,15 +9,13 @@
 % Output
 %       tree[struct] - Label Tree structure
 % 
-    clear ;
-    load( 'toy_data.mat' ) ;
-
     [ feature_count , dimension ] = size( feature ) ;
     label_count = max( label ) ;
     node_count = label_count * 2 - 1 ;
     
     tree = struct() ;
     tree.label_count = label_count ;
+    tree.node_count = node_count ;
     tree.feature_dimension = dimension ;
     tree.child = zeros( node_count , 2 ) ;
     tree.father = zeros( node_count , 1 ) ;
@@ -29,7 +27,7 @@
     
     node_counter = 1 ;
     for i = 1 : node_count
-        disp( i ) ;
+        disp( [ 'Building Tree Structure... ' , num2str( i ) , '/' , num2str( node_count ) ] ) ;
         
         % Initialize for each node
         node_label_count = sum( tree.l( i , : ) ) ;
@@ -75,8 +73,6 @@
         end
         C = ( C + C' ) / 2 ;
         
-        return ;
-        
         % And using spectral clustering
         label_split = spectral_clustering( C + 1e-6 , 2 ) ;
         
@@ -88,8 +84,8 @@
             % There need a re-map
             %    node_label -> label
             % tree.l( node_counter , label_split == j ) = 1 ;
-            tree.l( node_counter , node_label( find( label_split == j ) ) ) = 1 ;
+            tree.l( node_counter , node_label( label_split == j ) ) = 1 ;
         end
       
     end
-% end
+end
