@@ -1,4 +1,4 @@
-% function [ w ] = gradient_descent( feature , label , tree )
+function [ w  , b ] = gradient_descent( feature , label , tree )
 % 根据传入的树结构进行梯度下降的训练，返回最后训练得到的矩阵
 % 梯度下降使用随机梯度下降：即随机选择一个样本作为测试样本
 % 
@@ -11,10 +11,14 @@
 %       w[M*D] - M parameters vector for each tree node
 %                (M is node count)
 %
-    gamma = 0.001 ;
+    gamma = 0.00001 ;
 
     w = zeros( tree.node_count , tree.feature_dimension ) ;
+    b = zeros( tree.node_count , 1 ) ;
     [ n , d ] = size( feature ) ;
+    if ( d ~= tree.feature_dimension )
+        error( 'vector demension not matching' ) ;
+    end
     
     % Start Iteration
     for iter = 1 : 65536
@@ -25,7 +29,7 @@
         % Finding r,s
         r = -1 ;
         s = -1 ;
-        min_delta = -1 ;
+        max_delta = 0 ;
         path = find( tree.l( : , sample_label ) ) ;
         for i = 1 : length( path )
             child = find( tree.father == path( i ) ) ;
@@ -36,9 +40,10 @@
             for j = 1 : length( child )
                 if ( child( j ) ~= true_child )
                     delta = w( child( j ) , : ) * sample_feature' - ...
-                            w( true_child , : ) * sample_feature' ;
-                    if ( min_delta == -1 || delta < min_delta )
-                        min_delta = delta ;
+                            w( true_child , : ) * sample_feature' + ... 
+                            + b( child( j ) ) - b( true_child ) ;
+                    if ( delta >= max_delta )
+                        max_delta = delta ;
                         r = true_child ;
                         s = child( j ) ;
                     end
@@ -52,7 +57,11 @@
         end
         
         % descent for r,s 
-        w( r , : ) = w( r , : ) + sample_feature / n ;
-        w( s , : ) = w( s , : ) - sample_feature / n ;
+        if ( r ~= -1 && s ~= -1 )
+            w( r , : ) = w( r , : ) + sample_feature / n ;
+            w( s , : ) = w( s , : ) - sample_feature / n ;
+            b( r ) = b( r ) + 1 / n ;
+            b( s ) = b( s ) - 1 / n ;
+        end
     end
-% end
+end

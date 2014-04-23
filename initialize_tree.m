@@ -20,14 +20,14 @@ function [ tree ] = initialize_tree( feature , label )
     tree.child = zeros( node_count , 2 ) ;
     tree.father = zeros( node_count , 1 ) ;
     % predictor parameter matrix w
-    tree.w = zeros( node_count , dimension ) ;
+%     tree.w = zeros( node_count , dimension ) ;
     % label set for each node
     tree.l = zeros( node_count , label_count ) ;
     tree.l( 1 , : ) = 1 ;
     
     node_counter = 1 ;
     for i = 1 : node_count
-        disp( [ 'Building Tree Structure... ' , num2str( i ) , '/' , num2str( node_count ) ] ) ;
+        disp( [ 'Learning Tree Structure... ' , num2str( i ) , '/' , num2str( node_count ) ] ) ;
         
         % Initialize for each node
         node_label_count = sum( tree.l( i , : ) ) ;
