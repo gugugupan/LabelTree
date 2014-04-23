@@ -11,7 +11,7 @@
 %       w[M*D] - M parameters vector for each tree node
 %                (M is node count)
 %
-    gamma = 0.1 ;
+    gamma = 0.001 ;
 
     w = zeros( tree.node_count , tree.feature_dimension ) ;
     [ n , d ] = size( feature ) ;
@@ -46,8 +46,13 @@
             end
         end
         
+        % descent for every vector
+        for i = 1 : tree.node_count 
+            w( i , : ) = w( i , : ) - 2 * gamma * w( i , : ) ;
+        end
+        
         % descent for r,s 
-        w( r , : ) = w( r , : ) + 2 * gamma * w( r , : ) - sample_feature ;
-        w( s , : ) = w( s , : ) + 2 * gamma * w( s , : ) + sample_feature ;
+        w( r , : ) = w( r , : ) + sample_feature / n ;
+        w( s , : ) = w( s , : ) - sample_feature / n ;
     end
 % end
