@@ -17,7 +17,13 @@ function [ label ] = labeltree_predict( feature , tree )
     end
     
     label = zeros( n , 1 ) ;
+    tic ;
     for i = 1 : n 
+        if ( mod( i , 1000 ) == 1 )
+            disp( [ 'labeltree testing [' , num2str(i),'/',...
+                num2str(n),']' ] ) ;
+            toc ;
+        end
         node = 1 ;
         while ( sum( tree.l( node , : ) ) > 1 )
             child = find( tree.father == node ) ;
