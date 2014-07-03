@@ -1,6 +1,4 @@
 % function [ tree ] = initialize_tree( feature , label )
-% ��ݴ����ͼ�������Լ�ͼ���ǩ�����һ���Ѿ�ȷ���ṹ�� Label Tree
-% Ĭ�� Label Tree ��һ��������
 %
 % Input
 %       feature[N*D] - N feature vector with D dimension
@@ -22,11 +20,11 @@
     tree.l = zeros( node_count , label_count ) ;
     tree.l( 1 , : ) = 1 ;
     
-%     load( 'C.mat' ) ;
     % Train one-vs-all svm for each label
     disp( 'Train one-vs-all svm for each label' ) ;
     SVMs = cell( label_count , 1 ) ;
     PRODUCT = 10 ;
+    LABMDA = 0.0001 ;
     for i = 1 : label_count 
         disp( [ 'Train one-vs-all SVM: ' , num2str( i ) ] ) ;
         positive = find( label == i ) ;
@@ -37,8 +35,12 @@
         temp_label_list = -1 * ones( length( list ) , 1 ) ;
         temp_label_list( 1 : length( positive ) ) = 1 ;
         temp_feature_list = feature( list , : ) ;
-%         SVMs{ i } = train( temp_label_list , sparse( temp_feature_list ) , '-q' ) ;
-        SVMs{ i } = svmtrain( temp_label_list , temp_feature_list , '-t 0 -b 1 -q' ) ;
+        weight = ones( length( list ) , 1 ) ;
+        weight( 1 : length( positive ) ) = PRODUCT ;
+        
+        SVMs{ i } = struct() ;
+        [ SVMs{ i }.w , SVMs{ i }.b , SVMs{ i }.info ] = ...
+            vl_svmtrain( temp_feature_list' , temp_label_list' , LABMDA ) ;
     end
 
     % Test each one-vs-all svm by all feature
@@ -46,19 +48,17 @@
     svm_test = zeros( feature_count , label_count ) ;
     for j = 1 : label_count
         disp( [ 'Calc for confusion matrix: [' , num2str(j) ,'/', num2str(label_count) ,']' ] ) ;
-        [ ~ , ~ , esti ] = svmpredict( ones( feature_count , 1 ) , feature , SVMs{ j } , '-b 1' ) ;
-        svm_test( : , j ) = esti( : , 1 ) ;
+        esti = feature * SVMs{ j }.w + SVMs{ j }.b ;
+        esti = ( esti - min( esti ) ) / ( max( esti ) - min( esti ) ) ;
+        svm_test( : , j ) = esti ;
     end
-    save( 'svm_test.mat' , 'svm_test' ) ;
-%     [ ~ , svm_test_label ] = max( svm_test , [] , 2 ) ;
+%     save( 'svm_test.mat' , 'svm_test' ) ;
 
     % Calc confusion matrix C
     C = zeros( label_count , label_count ) ;
     for i = 1 : feature_count
         svm_test( i , : ) = svm_test( i , : ) / sum( svm_test( i , : ) ) ;
         C( label( i ) , : ) = C( label( i ) , : ) + svm_test( i , : ) ;
-%         C( label( j ) , svm_test_label( j ) ) = ...
-%             C( label( j ) , svm_test_label( j ) ) + 1 ;
     end
     for j = 1 : label_count
         C( j , : ) = C( j , : ) / sum( label == j ) ;
@@ -93,7 +93,7 @@
         
         % And using spectral clustering
         label_split = spectral_clustering( CC + 1e-6 , 2 ) ;
-        disp( label_split ) ;
+%         disp( label_split ) ;
         
         % Split label to two child node
         for j = 1 : 2 

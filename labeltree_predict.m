@@ -1,15 +1,15 @@
 function [ label ] = labeltree_predict( feature , tree )
-%Predict label for feature vector
+% Predict label for feature vector
 %
-%Usage
-%    label = labeltree_predict(feature,tree)
+% Usage
+%     label = labeltree_predict(feature,tree)
 %
-%Input
-%    feature[N*D] : N test feature vector with demension D
-%    tree[struct] : Label Tree struct
+% Input
+%     feature[N*D] : N test feature vector with demension D
+%     tree[struct] : Label Tree struct
 %
-%Output
-%    label[N*1] : Predict for each feature
+% Output
+%     label[N*1] : Predict for each feature
 
     [ n , d ] = size( feature ) ;
     if ( d ~= tree.feature_dimension )
@@ -20,8 +20,7 @@ function [ label ] = labeltree_predict( feature , tree )
     tic ;
     for i = 1 : n 
         if ( mod( i , 1000 ) == 1 )
-            disp( [ 'labeltree testing [' , num2str(i),'/',...
-                num2str(n),']' ] ) ;
+            disp( [ 'labeltree testing [' , num2str(i),'/',num2str(n),']' ] ) ;
             toc ;
         end
         node = 1 ;

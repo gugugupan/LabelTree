@@ -1,6 +1,4 @@
-﻿% function [ w , b ] = gradient_descent( feature , label , tree )
-% ��ݴ�������ṹ�����ݶ��½���ѵ�����������ѵ���õ��ľ���
-% �ݶ��½�ʹ������ݶ��½��������ѡ��һ������Ϊ������
+% function [ w , b ] = gradient_descent( feature , label , tree )
 % 
 % Input
 %       feature[N*D] - N feature vector with D dimension
