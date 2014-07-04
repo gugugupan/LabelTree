@@ -1,4 +1,4 @@
-% function [ tree ] = initialize_tree( feature , label )
+function [ tree ] = initialize_tree( feature , label )
 %
 % Input
 %       feature[N*D] - N feature vector with D dimension
@@ -35,8 +35,8 @@
         temp_label_list = -1 * ones( length( list ) , 1 ) ;
         temp_label_list( 1 : length( positive ) ) = 1 ;
         temp_feature_list = feature( list , : ) ;
-        weight = ones( length( list ) , 1 ) ;
-        weight( 1 : length( positive ) ) = PRODUCT ;
+%         weight = ones( length( list ) , 1 ) ;
+%         weight( 1 : length( positive ) ) = PRODUCT ;
         
         SVMs{ i } = struct() ;
         [ SVMs{ i }.w , SVMs{ i }.b , SVMs{ i }.info ] = ...
@@ -107,4 +107,4 @@
         end
       
     end
-% end
+end

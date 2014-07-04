@@ -2,13 +2,16 @@
  * Gradient Descent for Label Tree - Matlab Mex
  *
  * Usage :
- *     [ w , b ] = gd( feature , label , father , L )
+ *     [ w , b ] = gd( feature , label , father , L , ?eta , ?gamma , ?iter_num )
  *
  * Input :
  *     feature[feature*dimension] : feature matrix for training data
  *     label[feature*1] : label vector for training data
  *     father[node*1] : tree struct vector (father[0] == -1)
  *     L[node*label] : label set for each node
+ *     eta : learning rate (default 0.1)
+ *     gamma : step width (default 0.001)
+ *     iter_num : number of iteration (default 5)
  */
 
 #include <cmath>
@@ -49,8 +52,10 @@ public :
 
 void mexFunction( int nlhs, mxArray *plhs[] , int nrhs, const mxArray*prhs[] )
 {
+    double eta , gamma ;
+    int iter_num ;
 	/* ===================== Input Checker ======================== */
-	if ( nrhs != 4 )
+	if ( nrhs < 4 )
 		mexErrMsgTxt( "Incorrect number of input arguments." ) ;
 	if ( mxGetM( prhs[ 0 ] ) != mxGetM( prhs[ 1 ] ) )
 		mexErrMsgTxt( "Dimension of two matrix differs." ) ;
@@ -61,6 +66,18 @@ void mexFunction( int nlhs, mxArray *plhs[] , int nrhs, const mxArray*prhs[] )
     if ( (int) mxGetN( prhs[ 1 ] ) != (int) mxGetM( prhs[ 3 ] ) || 
             (int) mxGetN( prhs[ 2 ] ) != (int) mxGetN( prhs[ 3 ] ) )
         mexErrMsgTxt( "Incorrect of \'L\'s dimension" ) ;
+    if ( nrhs >= 5 )
+        eta = (double) *mxGetPr( prhs[ 5 ] ) ;
+    else
+        eta = 0.1 ;
+    if ( nrhs >= 6 )
+        gamma = (double) *mxGetPr( prhs[ 6 ] ) ;
+    else
+        gamma = 0.001 ;
+    if ( nrhs >= 7 )
+        iter_num = (int) *mxGetPr( prhs[ 7 ] ) ;
+    else
+        iter_num = 5 ;
 	
 	/* ===================== Input Labels ========================= */
     /* [ w , b ] = gd( feature , label , father , L ) */
@@ -72,42 +89,14 @@ void mexFunction( int nlhs, mxArray *plhs[] , int nrhs, const mxArray*prhs[] )
     MatDoubleMatrix feature = MatDoubleMatrix( feature_count , dimension , (double *) mxGetPr( prhs[ 0 ] ) ) ;
     MatDoubleMatrix label   = MatDoubleMatrix( label_count , 1 , (double *) MatDoubleMatrix ) ;
     
-// 	int k , n , m , d ;	
-// 	k = ( int ) *mxGetPr( prhs[ 2 ] ) ;
-// 	d = ( int ) mxGetM( prhs[ 0 ] ) ;
-// 	n = ( int ) mxGetN( prhs[ 0 ] ) ;
-// 	m = ( int ) mxGetN( prhs[ 1 ] ) ;
-
-	MatDoubleMatrix Q = MatDoubleMatrix( d , n , ( double * ) mxGetPr( prhs[ 0 ] ) ) ;
-	MatDoubleMatrix F = MatDoubleMatrix( d , m , ( double * ) mxGetPr( prhs[ 1 ] ) ) ;
-	
 	/* ===================== Output Labels ======================== */
 	nlhs = 1 ;
 	plhs[ 0 ] = mxCreateDoubleMatrix( k , n , mxREAL ) ;
 	MatDoubleMatrix I = MatDoubleMatrix( k , n , ( double * ) mxGetPr( plhs[ 0 ] ) ) ;
 	
 	/* ===================== Calc ======================== */
-	dist = ( double * ) mxMalloc( sizeof( double ) * m ) ;
-	place = ( int * ) mxMalloc( sizeof( int ) * m ) ;
-	
-	for ( int i = 0 ; i < n ; i ++ )
-	{
-		// printf( "[LOG] KNN algorithm STEP(%d/%d)\n" , i + 1 , n ) ;
-		for ( int j = 0 ; j < m ; j ++ )
-		{
-			place[ j ] = j ;
-
-			dist[ j ] = 0 ;
-			for ( int k = 0 ; k < d ; k ++ )
-				dist[ j ] += sqr( Q.get( k , i ) - F.get( k , j ) ) ;
-			dist[ j ] = sqrt( dist[ j ] ) ;
-		}
-		sort( place , place + m , sort_compare ) ;
-		for ( int j = 0 ; j < k ; j ++ )
-			I.set( j , i , place[ j ] + 1 ) ;
-		/*for ( int j = 0 ;j < m ; j ++ )
-			printf( "%d %d %d %.4lf\n" , i , j , place[ j ] , dist[ place[ j ] ] ) ;*/
-	}
-	mxFree( dist ) ;
-	mxFree( place ) ;
+// 	dist = ( double * ) mxMalloc( sizeof( double ) * m ) ;
+// 	place = ( int * ) mxMalloc( sizeof( int ) * m ) ;
+// 	mxFree( dist ) ;
+// 	mxFree( place ) ;
 }

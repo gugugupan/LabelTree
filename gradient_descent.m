@@ -1,4 +1,4 @@
-% function [ w , b ] = gradient_descent( feature , label , tree )
+function [ w , b ] = gradient_descent( feature , label , tree )
 % 
 % Input
 %       feature[N*D] - N feature vector with D dimension
@@ -28,8 +28,8 @@ for iter_perm = 1 : 5
     r = zeros( n , 1 ) ;
     s = zeros( n , 1 ) ;
     for iter_batch = 1 : ceil( n / batch_size ) 
-        disp( sprintf( '%d %d' , iter_batch , iter_perm ) ) ;
-        toc ;
+%         disp( sprintf( '%d %d' , iter_batch , iter_perm ) ) ;
+%         toc ;
         start_pointer  = ( iter_batch - 1 ) * batch_size + 1 ;
         finish_pointer = min( n , iter_batch * batch_size ) ;
         
@@ -83,4 +83,4 @@ for iter_perm = 1 : 5
     end
 end
 
-% end
+end
