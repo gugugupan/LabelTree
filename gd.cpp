@@ -78,15 +78,15 @@ void mexFunction( int nlhs, mxArray *plhs[] , int nrhs, const mxArray*prhs[] )
     if ( (int) mxGetM( prhs[ 2 ] ) != (int) mxGetM( prhs[ 3 ] ) )
         mexErrMsgTxt( "Incorrect of \'L\'s size" ) ;
     if ( nrhs >= 5 )
-        eta = (double) *mxGetPr( prhs[ 5 ] ) ;
+        eta = (double) *mxGetPr( prhs[ 4 ] ) ;
     else
         eta = 0.1 ;
     if ( nrhs >= 6 )
-        gamma = (double) *mxGetPr( prhs[ 6 ] ) ;
+        gamma = (double) *mxGetPr( prhs[ 5 ] ) ;
     else
         gamma = 0.001 ;
     if ( nrhs >= 7 )
-        iter_num = (int) *mxGetPr( prhs[ 7 ] ) ;
+        iter_num = (int) *mxGetPr( prhs[ 6 ] ) ;
     else
         iter_num = 10 ;
 	
