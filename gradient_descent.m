@@ -24,6 +24,7 @@ tic ;
 for iter_perm = 1 : 5
     disp( [ 'gradient descent: ' , num2str(iter_perm) ] ) ;
     perm = randperm( n ) ;
+%     perm = 1 : n ;
     batch_size = 1 ;
     r = zeros( n , 1 ) ;
     s = zeros( n , 1 ) ;
@@ -71,6 +72,7 @@ for iter_perm = 1 : 5
     
         % descent for r,s 
         for i = start_pointer : finish_pointer
+%             disp( [ r( i ) , s( i ) ] ) ;
             if ( r( i ) ~= -1 && s( i ) ~= -1 )
                 w( r( i ) , : ) = w( r( i ) , : ) + ...
                     eta * sample_feature / batch_size ;
