@@ -17,6 +17,8 @@ function tree = labeltree_train( feature , label )
     end
 
     tree = initialize_tree( feature , label ) ;
-    [ tree.w , tree.b ] = gd( feature , label , tree.father , tree.l , 0.1 , 0.001 , 10 ) ;
+    [ tree.w , tree.b ] = gd( feature , label , tree.father , tree.l , ...
+        0.02 , 0.001 , 25 , 10 ) ;
+    % eta * iter * 2 == 1
 %     [ tree.w , tree.b ] = gradient_descent( feature , label , tree ) ;
 end

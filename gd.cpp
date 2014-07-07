@@ -65,7 +65,7 @@ void randperm( vector<int> &p ) {
 void mexFunction( int nlhs, mxArray *plhs[] , int nrhs, const mxArray*prhs[] )
 {
     double eta , gamma ;
-    int iter_num ;
+    int iter_num , batch_size ;
 	/* ===================== Input Checker ======================== */
 	if ( nrhs < 4 )
 		mexErrMsgTxt( "Incorrect number of input arguments." ) ;
@@ -89,6 +89,10 @@ void mexFunction( int nlhs, mxArray *plhs[] , int nrhs, const mxArray*prhs[] )
         iter_num = (int) *mxGetPr( prhs[ 6 ] ) ;
     else
         iter_num = 10 ;
+    if ( nrhs >= 8 )
+        batch_size = (int) *mxGetPr( prhs[ 7 ] ) ;
+    else
+        batch_size = 20 ;
 	
 	/* ===================== Input Labels ========================= */
     /* [ w , b ] = gd( feature , label , father , L )
@@ -124,8 +128,8 @@ void mexFunction( int nlhs, mxArray *plhs[] , int nrhs, const mxArray*prhs[] )
     // Tree Structure
     vector<vector<int> > son( node_count ) ;
     for ( int i = 1 ; i < node_count ; i ++ ) {
-        int x = (int) MPTR( father , i , 0 ) - 1 ;
-        son[ x ].push_back( i ) ;
+        int fa = (int) MPTR( father , i , 0 ) - 1 ;
+        son[ fa ].push_back( i ) ;
     }
 
     // Gradient Descent
@@ -133,43 +137,53 @@ void mexFunction( int nlhs, mxArray *plhs[] , int nrhs, const mxArray*prhs[] )
     for ( int iter = 0 ; iter < iter_num ; iter ++ ) {
         cout << "Running Iter " << iter << '/' << iter_num << endl;
         randperm( permutation ) ;
-        for ( int t = 0 ; t < permutation.size() ; t ++ ) {
-            int sample_pt = permutation[ t ] ;
-            int sample_label = (int) MPTR( label , sample_pt , 0 ) - 1 ;
-            
-            // Find maximum 'r' and 's' 
-            int r = -1 , s = -1 ; 
-            double max_delta = 0 ;
-            int now_pt = 0 ;
-            while  ( true ) {
-                if ( son[ now_pt ].size() == 0 ) break ;
-                int find_r , find_s = -1 ;
-                double val_r , val_s ;
-                for ( int i = 0 ; i < son[ now_pt ].size() ; i ++ ) {
-                    if ( (int) MPTR( labelset , son[ now_pt ] [ i ] , sample_label ) == 1 ) {
-                        find_r = son[ now_pt ] [ i ] ;
-                        val_r = (double) MPTR( b , find_r , 0 ) ;
-                        #pragma omp parallel for reduction(+:val_r)
-                        for ( int j = 0 ; j < dimension ; j ++ )
-                            val_r += MPTR( feature , sample_pt , j ) * MPTR( w , find_r , j ) ;
-                    } else {
-                        int temp_s = son[ now_pt ] [ i ] ;
-                        double temp_val_s = MPTR( b , temp_s , 0 ) ;
-                        #pragma omp parallel for reduction(+:temp_val_s)
-                        for ( int j = 0 ; j < dimension ; j ++ )
-                            temp_val_s += MPTR( feature , sample_pt , j ) * MPTR( w , temp_s , j ) ;
-                        if ( find_s == -1 || temp_val_s > val_s ) {
-                            find_s = temp_s ;
-                            val_s = temp_val_s ;
+
+        // Count one batch with 'batch_size' everytime
+        for ( int t = 0 ; t < permutation.size() ; ) {
+            vector<int> r , s , x ;
+            for ( int i = 0 ; i < batch_size && t < permutation.size() ; i ++ , t ++ ) {
+                int sample_pt = permutation[ t ] ;
+                int sample_label = (int) MPTR( label , sample_pt , 0 ) - 1 ;
+                
+                // Find maximum 'r' and 's' 
+                int best_r = -1 , best_s = -1 ; 
+                double max_delta = 0 ;
+                int now_pt = 0 ;
+                while  ( true ) {
+                    if ( son[ now_pt ].size() == 0 ) break ;
+                    int find_r , find_s = -1 ;
+                    double val_r , val_s ;
+                    for ( int i = 0 ; i < son[ now_pt ].size() ; i ++ ) {
+                        if ( (int) MPTR( labelset , son[ now_pt ] [ i ] , sample_label ) == 1 ) {
+                            find_r = son[ now_pt ] [ i ] ;
+                            val_r = (double) MPTR( b , find_r , 0 ) ;
+                            #pragma omp parallel for reduction(+:val_r)
+                            for ( int j = 0 ; j < dimension ; j ++ )
+                                val_r += MPTR( feature , sample_pt , j ) * MPTR( w , find_r , j ) ;
+                        } else {
+                            int temp_s = son[ now_pt ] [ i ] ;
+                            double temp_val_s = MPTR( b , temp_s , 0 ) ;
+                            #pragma omp parallel for reduction(+:temp_val_s)
+                            for ( int j = 0 ; j < dimension ; j ++ )
+                                temp_val_s += MPTR( feature , sample_pt , j ) * MPTR( w , temp_s , j ) ;
+                            if ( find_s == -1 || temp_val_s > val_s ) {
+                                find_s = temp_s ;
+                                val_s = temp_val_s ;
+                            }
                         }
                     }
+                    if ( val_s - val_r >= max_delta ) {
+                        max_delta = val_s - val_r ;
+                        best_r = find_r ;
+                        best_s = find_s ;
+                    }
+                    now_pt = find_r ;
                 }
-                if ( val_s - val_r >= max_delta ) {
-                    max_delta = val_s - val_r ;
-                    r = find_r ;
-                    s = find_s ;
+                if ( best_r != -1 && best_s != -1 ) {
+                    r.push_back( best_r ) ;
+                    s.push_back( best_s ) ;
+                    x.push_back( sample_pt ) ;
                 }
-                now_pt = find_r ;
             }
 
             // Add Gradient for 'w' and 'b' 
@@ -177,14 +191,15 @@ void mexFunction( int nlhs, mxArray *plhs[] , int nrhs, const mxArray*prhs[] )
             for ( int i = 0 ; i < node_count ; i ++ )
                 for ( int j = 0 ; j < dimension ; j ++ )
                     MPTR( w , i , j ) -= 2 * eta * gamma * MPTR( w , i , j ) ;
-            if ( r != -1 && s != -1 ) {
+            for ( int i = 0 ; i < r.size() ; i ++ )
+            {
                 #pragma omp parallel for
                 for ( int j = 0 ; j < dimension ; j ++ ) {
-                    MPTR( w , r , j ) += eta * MPTR( feature , sample_pt , j ) ;
-                    MPTR( w , s , j ) -= eta * MPTR( feature , sample_pt , j ) ;
+                    MPTR( w , r[ i ] , j ) += eta * MPTR( feature , x[ i ] , j ) / ( double ) batch_size ;
+                    MPTR( w , s[ i ] , j ) -= eta * MPTR( feature , x[ i ] , j ) / ( double ) batch_size ;
                 }
-                MPTR( b , r , 0 ) += eta ;
-                MPTR( b , s , 0 ) -= eta ;
+                MPTR( b , r[ i ] , 0 ) += eta / ( double ) batch_size ;
+                MPTR( b , s[ i ] , 0 ) -= eta / ( double ) batch_size ;
             }
         }
     }
