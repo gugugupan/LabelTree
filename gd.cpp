@@ -182,9 +182,9 @@ void mexFunction( int nlhs, mxArray *plhs[] , int nrhs, const mxArray*prhs[] )
                 for ( int j = 0 ; j < dimension ; j ++ ) {
                     MPTR( w , r , j ) += eta * MPTR( feature , sample_pt , j ) ;
                     MPTR( w , s , j ) -= eta * MPTR( feature , sample_pt , j ) ;
-                    MPTR( b , r , 0 ) += eta ;
-                    MPTR( b , s , 0 ) -= eta ;
                 }
+                MPTR( b , r , 0 ) += eta ;
+                MPTR( b , s , 0 ) -= eta ;
             }
         }
     }
