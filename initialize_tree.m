@@ -28,12 +28,12 @@ function [ tree ] = initialize_tree( feature , label )
         disp( [ 'Train one-vs-all SVM: ' , num2str( i ) ] ) ;
         temp_label_list = ones( feature_count , 1 ) ;
         temp_label_list( label ~= i ) = -1 ;
-%         weight_vector = ones( feature_count , 1 ) ;
-%         weight_vector( label ~= i ) = sum( label == i ) / sum( label ~= i ) ;
+        weight_vector = ones( feature_count , 1 ) ;
+        weight_vector( label ~= i ) = sum( label == i ) / sum( label ~= i ) ;
         
         SVMs{ i } = struct() ;
-        [ SVMs{ i }.w , SVMs{ i }.b , SVMs{ i }.info ] = vl_svmtrain( feature' , temp_label_list' , LABMDA ) ;
-%             'Weights' , weight_vector ) ;
+        [ SVMs{ i }.w , SVMs{ i }.b , SVMs{ i }.info ] = vl_svmtrain( feature' , temp_label_list' , LABMDA , ...
+            'Weights' , weight_vector ) ;
     end
 
     % Test each one-vs-all svm by all feature
