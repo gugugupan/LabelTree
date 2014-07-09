@@ -23,45 +23,32 @@ function [ tree ] = initialize_tree( feature , label )
     % Train one-vs-all svm for each label
     disp( 'Train one-vs-all svm for each label' ) ;
     SVMs = cell( label_count , 1 ) ;
-    PRODUCT = 10 ;
     LABMDA = 0.0001 ;
     for i = 1 : label_count 
         disp( [ 'Train one-vs-all SVM: ' , num2str( i ) ] ) ;
-        positive = find( label == i ) ;
-        negative = find( label ~= i ) ;
-        negative_num = min( length( positive ) * PRODUCT , length( negative ) ) ;
-        negative = negative( randperm( length( negative ) , negative_num ) ) ;
-        list = [ positive ; negative ] ;
-        temp_label_list = -1 * ones( length( list ) , 1 ) ;
-        temp_label_list( 1 : length( positive ) ) = 1 ;
-        temp_feature_list = feature( list , : ) ;
-%         weight = ones( length( list ) , 1 ) ;
-%         weight( 1 : length( positive ) ) = PRODUCT ;
+        temp_label_list = ones( feature_count , 1 ) ;
+        temp_label_list( label ~= i ) = -1 ;
+%         weight_vector = ones( feature_count , 1 ) ;
+%         weight_vector( label ~= i ) = sum( label == i ) / sum( label ~= i ) ;
         
         SVMs{ i } = struct() ;
-        [ SVMs{ i }.w , SVMs{ i }.b , SVMs{ i }.info ] = ...
-            vl_svmtrain( temp_feature_list' , temp_label_list' , LABMDA ) ;
+        [ SVMs{ i }.w , SVMs{ i }.b , SVMs{ i }.info ] = vl_svmtrain( feature' , temp_label_list' , LABMDA ) ;
+%             'Weights' , weight_vector ) ;
     end
 
     % Test each one-vs-all svm by all feature
     disp( 'Calc confusion matrix' ) ;
     svm_test = zeros( feature_count , label_count ) ;
-    for j = 1 : label_count
-        disp( [ 'Calc for confusion matrix: [' , num2str(j) ,'/', num2str(label_count) ,']' ] ) ;
-        esti = feature * SVMs{ j }.w + SVMs{ j }.b ;
-        esti = ( esti - min( esti ) ) / ( max( esti ) - min( esti ) ) ;
-        svm_test( : , j ) = esti ;
+    for i = 1 : label_count
+        disp( [ 'Calc for confusion matrix: [' , num2str(i) ,'/', num2str(label_count) ,']' ] ) ;
+        esti = feature * SVMs{ i }.w + SVMs{ i }.b ;
+        svm_test( : , i ) = 1 ./ ( 1 + exp( -esti ) ) ; % sigmoid function
     end
-%     save( 'svm_test.mat' , 'svm_test' ) ;
 
     % Calc confusion matrix C
     C = zeros( label_count , label_count ) ;
     for i = 1 : feature_count
-        svm_test( i , : ) = svm_test( i , : ) / sum( svm_test( i , : ) ) ;
-        C( label( i ) , : ) = C( label( i ) , : ) + svm_test( i , : ) ;
-    end
-    for j = 1 : label_count
-        C( j , : ) = C( j , : ) / sum( label == j ) ;
+        C( label( i ) , : ) = C( label( i ) , : ) + svm_test( i , : ) / sum( label == label( i ) ) ;
     end
     C = ( C + C' ) / 2 ;
 
@@ -75,34 +62,17 @@ function [ tree ] = initialize_tree( feature , label )
         if ( node_label_count == 1 )
             continue ;
         end
-        % Mapping label(num) to node_label(num)
-        %    label(num) is 1:label_count
-        %    node_label(num) is 1:node_label_count
-        %    so there need a mapping
-        %  
-        %    node_label : node_label(num) -> label(num)
-        %    map_node_label : label(num) -> node_label(num)
-%         map_node_label = zeros( label_count , 1 ) ;
-%         map_node_label( node_label ) = 1 : node_label_count ;
-%         node_feature_id_list = find( ismember( label , node_label ) ) ;
-%         node_feature_count = length( node_feature_id_list ) ;
-%         node_feature_label = map_node_label(label(node_feature_id_list)) ;
-%         node_feature = feature( node_feature_id_list , : ) ;
         
         CC = C( node_label , node_label ) ;
         
         % And using spectral clustering
         label_split = spectral_clustering( CC + 1e-6 , 2 ) ;
-%         disp( label_split ) ;
         
         % Split label to two child node
         for j = 1 : 2 
             node_counter = node_counter + 1 ;
             tree.child( i , j ) = node_counter ;
             tree.father( node_counter ) = i ;
-            % There need a re-map
-            %    node_label -> label
-            % tree.l( node_counter , label_split == j ) = 1 ;
             tree.l( node_counter , node_label( label_split == j ) ) = 1 ;
         end
       
