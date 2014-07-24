@@ -66,14 +66,16 @@ function [ tree ] = initialize_tree( feature , label )
         CC = C( node_label , node_label ) ;
         
         % And using spectral clustering
-        label_split = spectral_clustering( CC + 1e-6 , 2 ) ;
+        % label_split = spectral_clustering( CC + 1e-6 , 2 ) ;
+        [label_split,~,~] = ncutW( CC + 1e-6 , 2 ) ;
         
         % Split label to two child node
         for j = 1 : 2 
             node_counter = node_counter + 1 ;
             tree.child( i , j ) = node_counter ;
             tree.father( node_counter ) = i ;
-            tree.l( node_counter , node_label( label_split == j ) ) = 1 ;
+            % tree.l( node_counter , node_label( label_split == j ) ) = 1 ;
+            tree.l( node_counter , node_label( find( label_split( : , j ) ) ) ) = 1 ;
         end
       
     end
